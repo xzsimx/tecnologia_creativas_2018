@@ -127,10 +127,10 @@ object ModeType {
 
 /** Nivel de cancelación que se usa al pulsar "ANC" en el widget. */
 enum class AncLevel(val modeType: Int, val label: String) {
-    SMART(ModeType.SMART, "Inteligente"),
     MAX(ModeType.MAX, "Máxima"),
     MODERATE(ModeType.MODERATE, "Moderada"),
     MILD(ModeType.MILD, "Suave"),
+    SMART(ModeType.SMART, "Inteligente"),
     ADAPTIVE(ModeType.ADAPTIVE, "Adaptativa");
 
     companion object {

@@ -16,7 +16,6 @@ import cl.tecnocreativas.budswidget.BudsActions
 import cl.tecnocreativas.budswidget.BudsState
 import cl.tecnocreativas.budswidget.MainActivity
 import cl.tecnocreativas.budswidget.R
-import cl.tecnocreativas.budswidget.protocol.AncLevel
 import cl.tecnocreativas.budswidget.protocol.NoiseMode
 import cl.tecnocreativas.budswidget.ui.DotMatrix
 import java.util.concurrent.atomic.AtomicBoolean
@@ -63,35 +62,19 @@ class BudsWidgetProvider : AppWidgetProvider() {
 
         private fun dp(ctx: Context, v: Float) = v * ctx.resources.displayMetrics.density
 
-        private fun headlineFor(mode: NoiseMode?) = when (mode) {
-            NoiseMode.ANC -> "ANC"
-            NoiseMode.TRANSPARENCY -> "TRANSP"
-            NoiseMode.OFF -> "NORMAL"
-            null -> "- - -"
+        private fun label(ctx: Context, mode: NoiseMode?) = when (mode) {
+            NoiseMode.ANC -> ctx.getString(R.string.label_anc)
+            NoiseMode.TRANSPARENCY -> ctx.getString(R.string.label_transparency)
+            NoiseMode.OFF -> ctx.getString(R.string.label_off)
+            null -> ctx.getString(R.string.status_tap_to_sync)
         }
 
-        private fun subtitle(ctx: Context, s: BudsState): String {
-            s.error?.let { return it }
-            if (s.pending != null) return ctx.getString(R.string.status_applying)
-            return when (s.mode) {
-                NoiseMode.ANC -> {
-                    val lvl: AncLevel? = s.reportedLevel ?: s.ancLevel.takeIf { it in s.model.ancLevels }
-                    ctx.getString(R.string.mode_anc_long) + (lvl?.let { " · ${it.label}" } ?: "")
-                }
-                NoiseMode.TRANSPARENCY -> ctx.getString(R.string.mode_transparency_long)
-                NoiseMode.OFF -> ctx.getString(R.string.mode_off_long)
-                null -> ctx.getString(R.string.status_tap_to_sync)
-            }
-        }
-
-        private fun battery(s: BudsState): String {
-            val l = s.batteryLeft; val r = s.batteryRight
-            return when {
-                l >= 0 && r >= 0 -> "L $l  R $r"
-                l >= 0 -> "L $l"
-                r >= 0 -> "R $r"
-                else -> ""
-            }
+        /** Texto de estado que reemplaza a la batería cuando hay algo que decir. */
+        private fun status(ctx: Context, s: BudsState): String? = when {
+            s.pending != null -> ctx.getString(R.string.status_applying)
+            s.error != null -> s.error
+            s.linkUp == false -> ctx.getString(R.string.status_disconnected)
+            else -> null
         }
 
         private fun title(s: BudsState): String {
@@ -99,62 +82,85 @@ class BudsWidgetProvider : AppWidgetProvider() {
             return name.removePrefix("OnePlus ").uppercase()
         }
 
-        private fun setStatusDot(v: RemoteViews, s: BudsState, on: Int, off: Int) {
-            val ok = s.error == null && s.linkUp != false && s.mode != null
-            v.setViewVisibility(on, if (ok) View.VISIBLE else View.GONE)
-            v.setViewVisibility(off, if (ok) View.GONE else View.VISIBLE)
+        /** Cabecera: nombre a la izquierda; batería en puntos (o un estado) a la derecha. */
+        private fun header(ctx: Context, v: RemoteViews, s: BudsState, ids: HeaderIds) {
+            v.setTextViewText(ids.title, title(s))
+            val st = status(ctx, s)
+            val bat = listOf(s.batteryLeft, s.batteryRight).filter { it >= 0 }.minOrNull()
+            when {
+                st != null -> {
+                    v.setViewVisibility(ids.battery, View.GONE)
+                    v.setViewVisibility(ids.status, View.VISIBLE)
+                    v.setTextViewText(ids.status, st)
+                }
+                bat != null -> {
+                    v.setViewVisibility(ids.status, View.GONE)
+                    v.setViewVisibility(ids.battery, View.VISIBLE)
+                    v.setImageViewBitmap(ids.battery, DotMatrix.text("$bat%", dp(ctx, 2f)))
+                }
+                else -> {
+                    v.setViewVisibility(ids.status, View.GONE)
+                    v.setViewVisibility(ids.battery, View.GONE)
+                }
+            }
+            if (ids.dotOn != 0) {
+                val ok = s.error == null && s.linkUp != false && s.mode != null
+                v.setViewVisibility(ids.dotOn, if (ok) View.VISIBLE else View.GONE)
+                v.setViewVisibility(ids.dotOff, if (ok) View.GONE else View.VISIBLE)
+            }
         }
 
-        // ───────────── 4×2: título, estado grande en puntos y tres botones ─────────────
+        private class HeaderIds(val title: Int, val battery: Int, val status: Int, val dotOn: Int = 0, val dotOff: Int = 0)
+
+        /** Las vistas de cada botón: fondo, ícono y etiqueta, en versión normal y seleccionada. */
+        private class ModeIds(val button: Int, val idle: IntArray, val sel: IntArray)
+
+        private val WIDE_MODES = mapOf(
+            NoiseMode.ANC to ModeIds(
+                R.id.btn_anc,
+                intArrayOf(R.id.bg_anc_idle, R.id.ic_anc_idle, R.id.lb_anc_idle),
+                intArrayOf(R.id.bg_anc_sel, R.id.ic_anc_sel, R.id.lb_anc_sel),
+            ),
+            NoiseMode.TRANSPARENCY to ModeIds(
+                R.id.btn_tr,
+                intArrayOf(R.id.bg_tr_idle, R.id.ic_tr_idle, R.id.lb_tr_idle),
+                intArrayOf(R.id.bg_tr_sel, R.id.ic_tr_sel, R.id.lb_tr_sel),
+            ),
+            NoiseMode.OFF to ModeIds(
+                R.id.btn_off,
+                intArrayOf(R.id.bg_off_idle, R.id.ic_off_idle, R.id.lb_off_idle),
+                intArrayOf(R.id.bg_off_sel, R.id.ic_off_sel, R.id.lb_off_sel),
+            ),
+        )
+
+        // ───────────── 4×2: nombre + batería, y los tres modos ─────────────
 
         private fun wide(ctx: Context, s: BudsState): RemoteViews {
             val v = RemoteViews(ctx.packageName, R.layout.widget_wide)
+            header(ctx, v, s, HeaderIds(R.id.title, R.id.battery, R.id.status, R.id.status_on, R.id.status_off))
             val shown = s.shownMode
-            v.setTextViewText(R.id.title, title(s))
-            v.setTextViewText(R.id.battery, battery(s))
-            v.setTextViewText(R.id.subtitle, subtitle(ctx, s))
-            setStatusDot(v, s, R.id.status_on, R.id.status_off)
-            v.setImageViewBitmap(R.id.headline, DotMatrix.text(headlineFor(shown), dp(ctx, 4.6f), ghostAlpha = 0))
-
-            val buttons = listOf(
-                Triple(NoiseMode.ANC, intArrayOf(R.id.btn_anc_idle, R.id.btn_anc_sel), intArrayOf(R.id.ic_anc_idle, R.id.ic_anc_sel)),
-                Triple(NoiseMode.TRANSPARENCY, intArrayOf(R.id.btn_tr_idle, R.id.btn_tr_sel), intArrayOf(R.id.ic_tr_idle, R.id.ic_tr_sel)),
-                Triple(NoiseMode.OFF, intArrayOf(R.id.btn_off_idle, R.id.btn_off_sel), intArrayOf(R.id.ic_off_idle, R.id.ic_off_sel)),
-            )
-            val containers = mapOf(NoiseMode.ANC to R.id.btn_anc, NoiseMode.TRANSPARENCY to R.id.btn_tr, NoiseMode.OFF to R.id.btn_off)
-            for ((mode, pills, icons) in buttons) {
+            for ((mode, ids) in WIDE_MODES) {
                 val selected = mode == shown
-                v.setViewVisibility(pills[0], if (selected) View.GONE else View.VISIBLE)
-                v.setViewVisibility(pills[1], if (selected) View.VISIBLE else View.GONE)
-                val icon = DotMatrix.icon(mode, dp(ctx, 1.55f))
-                icons.forEach { v.setImageViewBitmap(it, icon) }
-                v.setOnClickPendingIntent(containers.getValue(mode), pending(ctx, ACTION_SET, mode))
+                ids.idle.forEach { v.setViewVisibility(it, if (selected) View.GONE else View.VISIBLE) }
+                ids.sel.forEach { v.setViewVisibility(it, if (selected) View.VISIBLE else View.GONE) }
+                v.setOnClickPendingIntent(ids.button, pending(ctx, ACTION_SET, mode))
+                v.setContentDescription(ids.button, label(ctx, mode))
             }
             v.setOnClickPendingIntent(R.id.header, openApp(ctx))
-            v.setOnClickPendingIntent(R.id.headline, pending(ctx, ACTION_REFRESH))
             return v
         }
 
-        // ───────────── 2×2: ícono grande, tocar para alternar ─────────────
+        // ───────────── 2×2: el modo actual; tocar para alternar ─────────────
 
         private fun small(ctx: Context, s: BudsState): RemoteViews {
             val v = RemoteViews(ctx.packageName, R.layout.widget_small)
+            header(ctx, v, s, HeaderIds(R.id.s_title, R.id.s_battery, R.id.s_status))
             val shown = s.shownMode
-            v.setTextViewText(R.id.s_title, title(s).replace("NORD ", ""))
-            val bat = listOf(s.batteryLeft, s.batteryRight).filter { it >= 0 }
-            v.setTextViewText(R.id.s_battery, if (bat.isEmpty()) "" else "${bat.min()}%")
-            setStatusDot(v, s, R.id.s_status_on, R.id.s_status_off)
-            v.setImageViewBitmap(R.id.s_icon, DotMatrix.icon(shown ?: NoiseMode.OFF, dp(ctx, 4.2f)))
-            v.setImageViewBitmap(R.id.s_headline, DotMatrix.text(headlineFor(shown), dp(ctx, 2.6f)))
-            val ind = mapOf(
-                NoiseMode.ANC to (R.id.s_ind_anc_on to R.id.s_ind_anc_off),
-                NoiseMode.TRANSPARENCY to (R.id.s_ind_tr_on to R.id.s_ind_tr_off),
-                NoiseMode.OFF to (R.id.s_ind_off_on to R.id.s_ind_off_off),
-            )
-            for ((mode, ids) in ind) {
-                v.setViewVisibility(ids.first, if (mode == shown) View.VISIBLE else View.GONE)
-                v.setViewVisibility(ids.second, if (mode == shown) View.GONE else View.VISIBLE)
+            val icons = mapOf(NoiseMode.ANC to R.id.s_ic_anc, NoiseMode.TRANSPARENCY to R.id.s_ic_tr, NoiseMode.OFF to R.id.s_ic_off)
+            for ((mode, id) in icons) {
+                v.setViewVisibility(id, if (mode == (shown ?: NoiseMode.OFF)) View.VISIBLE else View.GONE)
             }
+            v.setTextViewText(R.id.s_label, label(ctx, shown))
             v.setOnClickPendingIntent(android.R.id.background, pending(ctx, ACTION_CYCLE))
             return v
         }

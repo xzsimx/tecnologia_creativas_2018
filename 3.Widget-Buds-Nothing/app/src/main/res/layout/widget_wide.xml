@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Widget 4×2 al estilo Nothing OS: tarjeta monocroma, titular en matriz de puntos,
-     un único acento rojo (punto de estado) y botones tipo píldora. -->
+<!-- Widget 4×2 al estilo Nothing X: nombre + batería en puntos arriba, y los tres modos
+     como botones circulares con íconos de línea fina. Nada más. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:layout_width="match_parent"
@@ -8,18 +8,19 @@
     android:background="@drawable/widget_bg"
     android:clipToOutline="true"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="18dp">
 
     <LinearLayout
         android:id="@+id/header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="16dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <FrameLayout
-            android:layout_width="8dp"
-            android:layout_height="8dp">
+            android:layout_width="6dp"
+            android:layout_height="6dp"
+            android:layout_marginEnd="8dp">
 
             <ImageView
                 android:id="@+id/status_on"
@@ -41,252 +42,249 @@
             android:id="@+id/title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:ellipsize="end"
             android:fontFamily="sans-serif-medium"
-            android:letterSpacing="0.12"
+            android:letterSpacing="0.14"
             android:maxLines="1"
-            android:text="BUDS 4"
             android:textColor="@color/fg"
-            android:textSize="12sp" />
+            android:textSize="11sp" />
 
-        <TextView
+        <ImageView
             android:id="@+id/battery"
             android:layout_width="wrap_content"
+            android:layout_height="14dp"
+            android:adjustViewBounds="true"
+            android:importantForAccessibility="no"
+            android:tint="@color/fg" />
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="monospace"
             android:maxLines="1"
             android:textColor="@color/fg_secondary"
-            android:textSize="12sp" />
+            android:textSize="11sp"
+            android:visibility="gone" />
     </LinearLayout>
-
-    <ImageView
-        android:id="@+id/headline"
-        android:layout_width="wrap_content"
-        android:layout_height="32dp"
-        android:layout_marginTop="12dp"
-        android:adjustViewBounds="true"
-        android:contentDescription="@string/app_name"
-        android:scaleType="fitStart"
-        android:tint="@color/fg" />
-
-    <TextView
-        android:id="@+id/subtitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="@color/fg_secondary"
-        android:textSize="12sp" />
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:minHeight="8dp" />
+        android:minHeight="10dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="44dp"
+        android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-    <FrameLayout
-        android:id="@+id/btn_anc"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:layout_marginEnd="6dp">
-
         <LinearLayout
-            android:id="@+id/btn_anc_idle"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/pill_idle"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:visibility="visible">
+            android:id="@+id/btn_anc"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/ic_anc_idle"
-                android:layout_width="wrap_content"
-                android:layout_height="20dp"
-                android:adjustViewBounds="true"
-                android:importantForAccessibility="no"
-                android:tint="@color/fg" />
+            <FrameLayout
+                android:layout_width="54dp"
+                android:layout_height="54dp">
+
+                <ImageView
+                    android:id="@+id/bg_anc_idle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/circle_idle" />
+
+                <ImageView
+                    android:id="@+id/bg_anc_sel"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/circle_sel"
+                    android:visibility="gone" />
+
+                <ImageView
+                    android:id="@+id/ic_anc_idle"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_mode_anc"
+                    android:tint="@color/fg" />
+
+                <ImageView
+                    android:id="@+id/ic_anc_sel"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_mode_anc"
+                    android:tint="@color/on_sel"
+                    android:visibility="gone" />
+            </FrameLayout>
 
             <TextView
+                android:id="@+id/lb_anc_idle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
+                android:layout_marginTop="8dp"
+                android:maxLines="1"
+                android:text="@string/label_anc"
+                android:textColor="@color/fg_secondary"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/lb_anc_sel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:fontFamily="sans-serif-medium"
-                android:letterSpacing="0.08"
                 android:maxLines="1"
                 android:text="@string/label_anc"
                 android:textColor="@color/fg"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:visibility="gone" />
         </LinearLayout>
-
         <LinearLayout
-            android:id="@+id/btn_anc_sel"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/pill_sel"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:visibility="gone">
+            android:id="@+id/btn_tr"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/ic_anc_sel"
-                android:layout_width="wrap_content"
-                android:layout_height="20dp"
-                android:adjustViewBounds="true"
-                android:importantForAccessibility="no"
-                android:tint="@color/on_sel" />
+            <FrameLayout
+                android:layout_width="54dp"
+                android:layout_height="54dp">
+
+                <ImageView
+                    android:id="@+id/bg_tr_idle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/circle_idle" />
+
+                <ImageView
+                    android:id="@+id/bg_tr_sel"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/circle_sel"
+                    android:visibility="gone" />
+
+                <ImageView
+                    android:id="@+id/ic_tr_idle"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_mode_transparency"
+                    android:tint="@color/fg" />
+
+                <ImageView
+                    android:id="@+id/ic_tr_sel"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_mode_transparency"
+                    android:tint="@color/on_sel"
+                    android:visibility="gone" />
+            </FrameLayout>
 
             <TextView
+                android:id="@+id/lb_tr_idle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
-                android:fontFamily="sans-serif-medium"
-                android:letterSpacing="0.08"
+                android:layout_marginTop="8dp"
                 android:maxLines="1"
-                android:text="@string/label_anc"
-                android:textColor="@color/on_sel"
+                android:text="@string/label_transparency"
+                android:textColor="@color/fg_secondary"
                 android:textSize="11sp" />
-        </LinearLayout>
-    </FrameLayout>
-
-    <FrameLayout
-        android:id="@+id/btn_tr"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:layout_marginEnd="6dp">
-
-        <LinearLayout
-            android:id="@+id/btn_tr_idle"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/pill_idle"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:visibility="visible">
-
-            <ImageView
-                android:id="@+id/ic_tr_idle"
-                android:layout_width="wrap_content"
-                android:layout_height="20dp"
-                android:adjustViewBounds="true"
-                android:importantForAccessibility="no"
-                android:tint="@color/fg" />
 
             <TextView
+                android:id="@+id/lb_tr_sel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
+                android:layout_marginTop="8dp"
                 android:fontFamily="sans-serif-medium"
-                android:letterSpacing="0.08"
                 android:maxLines="1"
                 android:text="@string/label_transparency"
                 android:textColor="@color/fg"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:visibility="gone" />
         </LinearLayout>
-
         <LinearLayout
-            android:id="@+id/btn_tr_sel"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/pill_sel"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:visibility="gone">
+            android:id="@+id/btn_off"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/ic_tr_sel"
-                android:layout_width="wrap_content"
-                android:layout_height="20dp"
-                android:adjustViewBounds="true"
-                android:importantForAccessibility="no"
-                android:tint="@color/on_sel" />
+            <FrameLayout
+                android:layout_width="54dp"
+                android:layout_height="54dp">
+
+                <ImageView
+                    android:id="@+id/bg_off_idle"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/circle_idle" />
+
+                <ImageView
+                    android:id="@+id/bg_off_sel"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/circle_sel"
+                    android:visibility="gone" />
+
+                <ImageView
+                    android:id="@+id/ic_off_idle"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_mode_off"
+                    android:tint="@color/fg" />
+
+                <ImageView
+                    android:id="@+id/ic_off_sel"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_mode_off"
+                    android:tint="@color/on_sel"
+                    android:visibility="gone" />
+            </FrameLayout>
 
             <TextView
+                android:id="@+id/lb_off_idle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
-                android:fontFamily="sans-serif-medium"
-                android:letterSpacing="0.08"
+                android:layout_marginTop="8dp"
                 android:maxLines="1"
-                android:text="@string/label_transparency"
-                android:textColor="@color/on_sel"
+                android:text="@string/label_off"
+                android:textColor="@color/fg_secondary"
                 android:textSize="11sp" />
-        </LinearLayout>
-    </FrameLayout>
-
-    <FrameLayout
-        android:id="@+id/btn_off"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1">
-
-        <LinearLayout
-            android:id="@+id/btn_off_idle"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/pill_idle"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:visibility="visible">
-
-            <ImageView
-                android:id="@+id/ic_off_idle"
-                android:layout_width="wrap_content"
-                android:layout_height="20dp"
-                android:adjustViewBounds="true"
-                android:importantForAccessibility="no"
-                android:tint="@color/fg" />
 
             <TextView
+                android:id="@+id/lb_off_sel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
+                android:layout_marginTop="8dp"
                 android:fontFamily="sans-serif-medium"
-                android:letterSpacing="0.08"
                 android:maxLines="1"
                 android:text="@string/label_off"
                 android:textColor="@color/fg"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:visibility="gone" />
         </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/btn_off_sel"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/pill_sel"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:visibility="gone">
-
-            <ImageView
-                android:id="@+id/ic_off_sel"
-                android:layout_width="wrap_content"
-                android:layout_height="20dp"
-                android:adjustViewBounds="true"
-                android:importantForAccessibility="no"
-                android:tint="@color/on_sel" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="7dp"
-                android:fontFamily="sans-serif-medium"
-                android:letterSpacing="0.08"
-                android:maxLines="1"
-                android:text="@string/label_off"
-                android:textColor="@color/on_sel"
-                android:textSize="11sp" />
-        </LinearLayout>
-    </FrameLayout>
     </LinearLayout>
 </LinearLayout>

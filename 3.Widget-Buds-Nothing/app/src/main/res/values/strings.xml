@@ -10,27 +10,31 @@
     <string name="mode_anc_long">Cancelación de ruido</string>
     <string name="mode_transparency_long">Transparencia</string>
     <string name="mode_off_long">Normal · ANC apagado</string>
+    <string name="section_noise">CONTROL DE RUIDO</string>
+    <string name="advanced">Avanzado</string>
+    <string name="add_widget">Añadir widget</string>
+    <string name="cap_left">IZQ</string>
+    <string name="cap_right">DER</string>
+    <string name="cap_case">ESTUCHE</string>
     <string name="label_anc">ANC</string>
-    <string name="label_transparency">TRANSP</string>
-    <string name="label_off">NORMAL</string>
+    <string name="label_transparency">Transparencia</string>
+    <string name="label_off">Normal</string>
 
     <string name="status_applying">Aplicando…</string>
     <string name="status_tap_to_sync">Toca para sincronizar</string>
+    <string name="status_disconnected">Desconectado</string>
+    <string name="status_connected">Conectado</string>
 
-    <string name="err_permission">Falta permiso Bluetooth: abre la app</string>
+    <string name="err_permission">Sin permiso</string>
     <string name="err_bt_off">Bluetooth apagado</string>
-    <string name="err_no_device">No hay audífonos emparejados</string>
-    <string name="err_not_connected">Sin conexión: ¿audífonos en el estuche?</string>
+    <string name="err_no_device">Sin audífonos</string>
+    <string name="err_not_connected">Sin conexión</string>
 
     <string name="grant">Conceder permiso de dispositivos cercanos</string>
     <string name="section_device">AUDÍFONOS</string>
-    <string name="section_level">NIVEL DE CANCELACIÓN</string>
-    <string name="section_level_hint">El botón ANC del widget usa este nivel. Adaptativa solo existe en Buds 4.</string>
-    <string name="section_test">PROBAR</string>
     <string name="section_console">CONSOLA DE PROTOCOLO</string>
     <string name="console_hint">CMD + payload en hex, ej. 010C 0101 (consultar modo) o 0404 010104 (transparencia en Buds 4)</string>
     <string name="refresh">Actualizar</string>
     <string name="send">Enviar</string>
-    <string name="pin">Añadir widget a la pantalla de inicio</string>
     <string name="no_bonded">Empareja primero tus OnePlus Buds 4 en Ajustes → Bluetooth.</string>
 </resources>

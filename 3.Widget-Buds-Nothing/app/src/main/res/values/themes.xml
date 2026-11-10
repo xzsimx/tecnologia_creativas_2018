@@ -20,13 +20,22 @@
         <item name="android:textColor">@color/fg_secondary</item>
     </style>
 
-    <style name="Section">
-        <item name="android:textSize">11sp</item>
+    <style name="Label">
+        <item name="android:textSize">10sp</item>
         <item name="android:textColor">@color/fg_secondary</item>
         <item name="android:letterSpacing">0.14</item>
         <item name="android:fontFamily">monospace</item>
-        <item name="android:layout_marginTop">28dp</item>
-        <item name="android:layout_marginBottom">10dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+    </style>
+
+    <style name="Row">
+        <item name="android:background">@drawable/row_card</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">22dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
     </style>
 
     <style name="Pill">

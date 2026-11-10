@@ -10,22 +10,26 @@ inicio, sin abrir la app de OnePlus.
 
 ## Qué incluye
 
-- **Widget 4×2**: modelo, batería L/R, modo actual en matriz de puntos y tres botones tipo píldora.
-- **Widget 2×2**: ícono del modo. Cada toque alterna ANC → Transparencia → Normal.
-- **Tile de Ajustes rápidos**: el mismo ciclo desde la cortina de notificaciones.
-- **App de configuración**: permisos, elección de audífonos, nivel de ANC y una consola para
-  enviar comandos crudos al audífono.
+- **Widget 4×2**: nombre, batería y los tres modos como botones circulares.
+- **Widget 2×2**: el modo actual en un círculo. Cada toque alterna ANC → Transparencia → Normal.
+- **Tile de Ajustes rápidos**: el mismo ciclo desde la cortina.
+- **App**: batería L/R/estuche, control de ruido y nivel de ANC. La elección de audífonos y la
+  consola de protocolo quedan escondidas en *Avanzado*.
 
-El widget cambia de tamaño libremente. Android elige el diseño 2×2 o 4×2 según el espacio.
+![app](docs/preview_app.png)
 
-## Diseño (lenguaje visual de Nothing OS)
+## Diseño (como Nothing X)
 
-- Tarjeta monocroma (`#1B1B1B` en oscuro, `#FFFFFF` en claro) con el radio de esquina del launcher.
-- Titular e íconos en **matriz de puntos**, como la tipografía Ndot y los íconos Glyph.
-  Se dibujan en código (`ui/DotMatrix.kt`), sin fuentes propietarias.
-- Un solo acento **rojo Nothing `#D71921`**: el punto de estado. Rojo = conectado, gris = sin conexión.
-- Botones tipo píldora. El seleccionado se invierte (blanco sobre negro en modo oscuro).
-- Texto secundario gris y en mayúsculas espaciadas.
+- Solo lo esencial: nombre, batería y los tres modos. Sin textos de relleno.
+- **Íconos de línea fina** (trazo de 1,5 dp, extremos redondeados), generados como vectores.
+- **Matriz de puntos** solo para los números de batería, como en Nothing X.
+- Botones circulares: gris cuando están inactivos y blanco con ícono negro cuando están
+  activos (al revés en modo claro).
+- Un único acento **rojo Nothing `#D71921`**: el punto de conexión.
+- Tipografía del sistema. Las etiquetas de sección van en mono, en mayúsculas espaciadas.
+
+`tools/preview.py` es la fuente única del diseño. Define la geometría de los íconos y genera
+los vectores Android y los mockups de `docs/`.
 
 ## Cómo funciona (ingeniería inversa)
 
@@ -66,9 +70,6 @@ cd 3.Widget-Buds-Nothing
 
 Requiere JDK 17 y Android SDK 36. El APK de release se firma con la clave debug para poder
 instalarlo directamente.
-
-`python3 tools/preview.py` regenera los íconos vectoriales y las imágenes de vista previa a
-partir de los mismos glifos de `DotMatrix.kt`.
 
 ## Limitaciones y notas
 

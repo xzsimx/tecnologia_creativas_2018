@@ -3,17 +3,12 @@ package cl.tecnocreativas.budswidget.ui
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
-import cl.tecnocreativas.budswidget.protocol.NoiseMode
 import java.text.Normalizer
-import kotlin.math.abs
-import kotlin.math.hypot
 
 /**
- * Tipografía e íconos de matriz de puntos, al estilo de la fuente Ndot de Nothing OS.
- * Se dibujan como bitmaps blancos sobre fondo transparente; el color final lo pone el
- * widget con un tint (así respetan modo claro/oscuro sin regenerar nada).
- *
- * Las tablas de glifos también las lee tools/preview.py para generar las vistas previas.
+ * Números en matriz de puntos, al estilo de la fuente Ndot de Nothing (como la batería
+ * en Nothing X). Se dibujan como bitmaps blancos; el color final lo pone un tint, así
+ * respetan modo claro/oscuro. tools/preview.py lee estos mismos glifos.
  */
 object DotMatrix {
 
@@ -48,7 +43,7 @@ object DotMatrix {
         'X' to arrayOf("#...#", "#...#", ".#.#.", "..#..", ".#.#.", "#...#", "#...#"),
         'Y' to arrayOf("#...#", "#...#", ".#.#.", "..#..", "..#..", "..#..", "..#.."),
         'Z' to arrayOf("#####", "....#", "...#.", "..#..", ".#...", "#....", "#####"),
-        '0' to arrayOf(".###.", "#...#", "#..##", "#.#.#", "##..#", "#...#", ".###."),
+        '0' to arrayOf(".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."),
         '1' to arrayOf("..#..", ".##..", "..#..", "..#..", "..#..", "..#..", ".###."),
         '2' to arrayOf(".###.", "#...#", "....#", "...#.", "..#..", ".#...", "#####"),
         '3' to arrayOf("#####", "...#.", "..#..", "...#.", "....#", "#...#", ".###."),
@@ -83,32 +78,6 @@ object DotMatrix {
     }
 
     /**
-     * Íconos de 13×13 generados por distancia al centro, así quedan perfectamente
-     * redondos en la grilla (como los íconos Glyph de Nothing).
-     */
-    fun iconGrid(mode: NoiseMode, size: Int = 13): Array<BooleanArray> {
-        val c = (size - 1) / 2.0
-        val outer = c
-        return Array(size) { y ->
-            BooleanArray(size) { x ->
-                val d = hypot(x - c, y - c)
-                val ring = abs(d - outer) < 0.55
-                when (mode) {
-                    // ANC: anillo exterior cerrado + núcleo sólido = sonido sellado
-                    NoiseMode.ANC -> ring || d <= outer * 0.42
-                    // Transparencia: ondas abiertas (anillos punteados) alrededor de un punto
-                    NoiseMode.TRANSPARENCY -> {
-                        val mid = abs(d - outer * 0.58) < 0.5
-                        (ring && (x + y) % 2 == 0) || (mid && (x + y) % 2 == 1) || d <= 1.0
-                    }
-                    // Normal: anillo + barra diagonal
-                    NoiseMode.OFF -> ring || (abs(x - (size - 1 - y)) <= 0 && d < outer)
-                }
-            }
-        }
-    }
-
-    /**
      * Dibuja una matriz. [pitch] = distancia entre centros de puntos en px. Los puntos
      * apagados se pueden dibujar tenues ([ghostAlpha] > 0) para el look de panel LED.
      */
@@ -132,6 +101,4 @@ object DotMatrix {
     }
 
     fun text(text: String, pitch: Float, ghostAlpha: Int = 0) = render(textGrid(text), pitch, ghostAlpha)
-
-    fun icon(mode: NoiseMode, pitch: Float) = render(iconGrid(mode), pitch)
 }

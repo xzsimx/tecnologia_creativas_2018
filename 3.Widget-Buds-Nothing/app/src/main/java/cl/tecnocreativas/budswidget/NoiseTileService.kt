@@ -44,9 +44,9 @@ class NoiseTileService : TileService() {
         tile.icon = Icon.createWithResource(
             this,
             when (mode) {
-                NoiseMode.ANC -> R.drawable.ic_tile_anc
-                NoiseMode.TRANSPARENCY -> R.drawable.ic_tile_transparency
-                else -> R.drawable.ic_tile_off
+                NoiseMode.ANC -> R.drawable.ic_mode_anc
+                NoiseMode.TRANSPARENCY -> R.drawable.ic_mode_transparency
+                else -> R.drawable.ic_mode_off
             },
         )
         tile.state = when (mode) {
