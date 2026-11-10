@@ -51,9 +51,9 @@ Nord Buds 3/3 Pro/4/4 Pro y Buds Ace. La lista está en `Catalog`.
 
 ## Instalar
 
-1. Descarga el APK desde **GitHub → Actions → "Buds widget (APK)" → artefacto
-   `buds-widget-apk`**, o compílalo tú (abajo).
-2. Instálalo en el teléfono y acepta "instalar apps desconocidas".
+1. Desde el teléfono, abre este enlace y se descarga directo (sin iniciar sesión):
+   **https://github.com/xzsimx/tecnologia_creativas_2018/releases/latest/download/Buds.apk**
+2. Abre el archivo descargado y acepta "instalar apps desconocidas" para tu navegador.
 3. Abre **Buds** y concede el permiso de *Dispositivos cercanos*.
 4. Elige tus audífonos (aparecen primero si se llaman "OnePlus Buds 4") y el nivel de ANC.
 5. Pulsa **Añadir widget a la pantalla de inicio**, o mantén presionado el escritorio →
