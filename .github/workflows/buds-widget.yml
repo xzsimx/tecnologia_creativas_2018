@@ -26,6 +26,14 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # Misma clave de firma en cada compilación (queda en la caché privada de Actions,
+      # no en el repo), para que cada APK nuevo se instale encima del anterior.
+      # Si la caché expira (7 días sin compilar), se genera otra y hay que reinstalar.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: buds-debug-keystore-v1
+
       - name: Tests del protocolo
         run: ./gradlew --no-daemon testDebugUnitTest
 

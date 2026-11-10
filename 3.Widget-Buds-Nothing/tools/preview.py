@@ -325,6 +325,97 @@ def app(theme="dark", s=3):
     return img.resize((img.width // SS, img.height // SS), Image.LANCZOS)
 
 
+# ───────────── formatos compactos (1x1, 2x1, 1x2) para launchers de íconos redondos ─────────────
+# Medidas tomadas de la pantalla de inicio de Nothing OS (4 columnas): celda 82×98 dp,
+# íconos de 63 dp. Los widgets compactos usan esas mismas proporciones.
+CELL_W, CELL_H, ICON = 82, 98, 63
+
+
+def circle_1x1(theme, active, s):
+    """Un círculo como los íconos de apps: el modo actual, toque para alternar."""
+    t = THEMES[theme]
+    D = ICON * s
+    img = Image.new("RGBA", (int(D), int(D)), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.ellipse([0, 0, D - 1, D - 1], fill=t["bg"])
+    ic = 28 * s
+    draw_icon(d, active, (D - ic) / 2, (D - ic) / 2, ic, t["fg"])
+    if active == "anc":  # único acento: punto rojo cuando la cancelación está activa
+        r = 3 * s
+        d.ellipse([D * 0.74 - r, D * 0.26 - r, D * 0.74 + r, D * 0.26 + r], fill=RED)
+    return img
+
+
+def pill(theme, active, s, vertical=False):
+    """Cápsula con los tres modos; el activo va en un círculo invertido."""
+    t = THEMES[theme]
+    long_side = (CELL_W + ICON) if not vertical else (CELL_H + ICON)
+    W, H = (long_side * s, ICON * s) if not vertical else (ICON * s, long_side * s)
+    img = Image.new("RGBA", (int(W), int(H)), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.rounded_rectangle([0, 0, W - 1, H - 1], radius=min(W, H) / 2, fill=t["bg"])
+    btn = 47 * s
+    pad = (ICON * s - btn) / 2
+    span = (W if not vertical else H) - 2 * pad
+    for i, (name, _) in enumerate(MODES):
+        c = pad + span / 6 + span / 3 * i
+        cx, cy = (c, H / 2) if not vertical else (W / 2, c)
+        sel = name == active
+        if sel:
+            d.ellipse([cx - btn / 2, cy - btn / 2, cx + btn / 2, cy + btn / 2], fill=t["sel"])
+        ic = 22 * s
+        draw_icon(d, name, cx - ic / 2, cy - ic / 2, ic, t["on_sel"] if sel else t["fg"])
+    return img
+
+
+def home(theme="dark", s=3):
+    """Pantalla de inicio de ejemplo (4 columnas) con los formatos nuevos junto a íconos."""
+    t = THEMES[theme]
+    S = s * SS
+    W, H = 360 * S, 470 * S
+    img = Image.new("RGBA", (int(W), int(H)), t["wall"])
+    d = ImageDraw.Draw(img)
+    x0 = (360 - 4 * CELL_W) / 2 * S
+    y0 = 20 * S
+
+    def cell(c, r):
+        return x0 + c * CELL_W * S, y0 + r * CELL_H * S
+
+    def place(im, c, r, cw, ch):
+        x, y = cell(c, r)
+        bw, bh = cw * CELL_W * S, ch * CELL_H * S
+        img.alpha_composite(im, (int(x + (bw - im.width) / 2), int(y + (bh - im.height) / 2)))
+
+    def app_icon(c, r):
+        x, y = cell(c, r)
+        cx, cy = x + CELL_W * S / 2, y + CELL_H * S / 2
+        R = ICON * S / 2
+        d.ellipse([cx - R, cy - R, cx + R, cy + R], fill=t["bg"])
+        d.rounded_rectangle([cx - 9 * S, cy - 9 * S, cx + 9 * S, cy + 9 * S], radius=4 * S, outline=t["fg2"], width=int(2 * S))
+
+    place(circle_1x1(theme, "anc", S), 0, 0, 1, 1)
+    for c in (1, 2, 3):
+        app_icon(c, 0)
+    place(pill(theme, "transparency", S), 0, 1, 2, 1)
+    app_icon(2, 1); app_icon(3, 1)
+    place(pill(theme, "anc", S, vertical=True), 0, 2, 1, 2)
+    app_icon(1, 2); app_icon(1, 3)
+    sm = small(theme, "off", S * (2 * CELL_W - 18) / 160)
+    place(sm, 2, 2, 2, 2)
+    return img.resize((img.width // SS, img.height // SS), Image.LANCZOS)
+
+
+def compact_previews():
+    nodpi = os.path.join(RES, "drawable-nodpi")
+    S = 2 * SS
+    for name, im in [("widget_preview_1x1", circle_1x1("dark", "anc", S)),
+                     ("widget_preview_2x1", pill("dark", "anc", S)),
+                     ("widget_preview_1x2", pill("dark", "anc", S, vertical=True))]:
+        im.resize((im.width // SS, im.height // SS), Image.LANCZOS).save(os.path.join(nodpi, name + ".png"), optimize=True)
+    for theme in THEMES:
+        home(theme).convert("RGB").save(os.path.join(DOCS, f"preview_home_{theme}.png"), optimize=True)
+
+
 def main():
     write_vectors()
     os.makedirs(DOCS, exist_ok=True)
@@ -335,6 +426,7 @@ def main():
     os.makedirs(nodpi, exist_ok=True)
     w = wide("dark", "anc", 2 * SS)
     w.resize((w.width // SS, w.height // SS), Image.LANCZOS).save(os.path.join(nodpi, "widget_preview.png"), optimize=True)
+    compact_previews()
     print("ok")
 
 

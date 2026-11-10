@@ -3,6 +3,12 @@
     <string name="app_name">Buds</string>
     <string name="widget_description">Cambia entre cancelación de ruido, transparencia y normal en tus OnePlus Buds 4</string>
     <string name="tile_label">Buds</string>
+    <string name="widget_name_1x1">Buds · círculo</string>
+    <string name="widget_name_2x1">Buds · cápsula</string>
+    <string name="widget_name_1x2">Buds · cápsula vertical</string>
+    <string name="widget_desc_1x1">Modo actual en un círculo. Toca para alternar.</string>
+    <string name="widget_desc_2x1">ANC, transparencia y normal en una cápsula.</string>
+    <string name="widget_desc_1x2">ANC, transparencia y normal en vertical.</string>
 
     <string name="mode_anc_short">ANC</string>
     <string name="mode_transparency_short">Transparencia</string>

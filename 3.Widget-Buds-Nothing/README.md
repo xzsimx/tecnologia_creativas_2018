@@ -10,8 +10,15 @@ inicio, sin abrir la app de OnePlus.
 
 ## Qué incluye
 
-- **Widget 4×2**: nombre, batería y los tres modos como botones circulares.
-- **Widget 2×2**: el modo actual en un círculo. Cada toque alterna ANC → Transparencia → Normal.
+- **Widget en 5 tamaños**, cada uno con su entrada en el selector de widgets:
+  - **1×1 círculo**: igual que los íconos de apps. Muestra el modo actual (punto rojo = ANC) y alterna al tocarlo.
+  - **2×1 cápsula** y **1×2 cápsula vertical**: los tres modos; el activo va en un círculo invertido.
+  - **2×2**: el modo actual en grande, con nombre y batería.
+  - **4×2**: nombre, batería y los tres modos con etiqueta.
+
+  Si cambias el tamaño de cualquiera, se adapta solo al formato que quepa.
+
+![widgets compactos en la pantalla de inicio](docs/preview_home_dark.png)
 - **Tile de Ajustes rápidos**: el mismo ciclo desde la cortina.
 - **App**: batería L/R/estuche, control de ruido y nivel de ANC. La elección de audífonos y la
   consola de protocolo quedan escondidas en *Avanzado*.

@@ -20,7 +20,13 @@ import cl.tecnocreativas.budswidget.protocol.NoiseMode
 import cl.tecnocreativas.budswidget.ui.DotMatrix
 import java.util.concurrent.atomic.AtomicBoolean
 
-class BudsWidgetProvider : AppWidgetProvider() {
+/**
+ * Un solo provider con vistas adaptables: según el tamaño que el usuario le dé, el launcher
+ * muestra círculo (1x1), cápsula (2x1 / 1x2), tarjeta (2x2) o la versión ancha (4x2).
+ * Las subclases de abajo solo existen para que cada tamaño aparezca como su propia
+ * entrada en el selector de widgets.
+ */
+open class BudsWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val ACTION_SET = "cl.tecnocreativas.budswidget.SET_MODE"
@@ -32,17 +38,36 @@ class BudsWidgetProvider : AppWidgetProvider() {
 
         fun updateAll(ctx: Context) {
             val mgr = AppWidgetManager.getInstance(ctx)
-            val ids = mgr.getAppWidgetIds(ComponentName(ctx, BudsWidgetProvider::class.java))
-            if (ids.isNotEmpty()) mgr.updateAppWidget(ids, build(ctx))
+            val views = build(ctx)
+            for (cls in PROVIDERS) {
+                val ids = mgr.getAppWidgetIds(ComponentName(ctx, cls))
+                if (ids.isNotEmpty()) mgr.updateAppWidget(ids, views)
+            }
         }
 
-        /** Vistas adaptables: el launcher elige la que calza con el tamaño del widget. */
-        fun build(ctx: Context): RemoteViews = RemoteViews(
-            mapOf(
-                SizeF(100f, 100f) to small(ctx, BudsState(ctx)),
-                SizeF(220f, 100f) to wide(ctx, BudsState(ctx)),
-            )
+        private val PROVIDERS = listOf(
+            BudsWidgetProvider::class.java,
+            BudsWidget1x1::class.java,
+            BudsWidget2x1::class.java,
+            BudsWidget1x2::class.java,
         )
+
+        /**
+         * Vistas adaptables. El launcher usa la más grande que quepa en el tamaño real del
+         * widget (en dp). En un Nothing de 4 columnas la celda mide ≈ 82×98 dp.
+         */
+        fun build(ctx: Context): RemoteViews {
+            val s = BudsState(ctx)
+            return RemoteViews(
+                mapOf(
+                    SizeF(40f, 40f) to circle(ctx, s),
+                    SizeF(110f, 40f) to capsule(ctx, s, vertical = false),
+                    SizeF(40f, 110f) to capsule(ctx, s, vertical = true),
+                    SizeF(100f, 100f) to small(ctx, s),
+                    SizeF(220f, 100f) to wide(ctx, s),
+                )
+            )
+        }
 
         private fun pending(ctx: Context, action: String, mode: NoiseMode? = null): PendingIntent {
             val intent = Intent(ctx, BudsWidgetProvider::class.java)
@@ -150,6 +175,49 @@ class BudsWidgetProvider : AppWidgetProvider() {
             return v
         }
 
+        // ───────────── 1×1: círculo con el modo actual; tocar para alternar ─────────────
+
+        private fun circle(ctx: Context, s: BudsState): RemoteViews {
+            val v = RemoteViews(ctx.packageName, R.layout.widget_circle)
+            val shown = s.shownMode ?: NoiseMode.OFF
+            val icons = mapOf(NoiseMode.ANC to R.id.c_ic_anc, NoiseMode.TRANSPARENCY to R.id.c_ic_tr, NoiseMode.OFF to R.id.c_ic_off)
+            for ((mode, id) in icons) v.setViewVisibility(id, if (mode == shown) View.VISIBLE else View.GONE)
+            v.setViewVisibility(R.id.c_dot, if (s.shownMode == NoiseMode.ANC) View.VISIBLE else View.GONE)
+            v.setContentDescription(R.id.c_root, label(ctx, s.shownMode))
+            v.setOnClickPendingIntent(R.id.c_root, pending(ctx, ACTION_CYCLE))
+            return v
+        }
+
+        // ───────────── 2×1 / 1×2: cápsula con los tres modos ─────────────
+
+        private fun capsule(ctx: Context, s: BudsState, vertical: Boolean): RemoteViews {
+            val v = RemoteViews(ctx.packageName, if (vertical) R.layout.widget_pill_v else R.layout.widget_pill_h)
+            val ids = if (vertical) {
+                mapOf(
+                    NoiseMode.ANC to intArrayOf(R.id.pv_btn_anc, R.id.pv_sel_anc, R.id.pv_ic_anc_idle, R.id.pv_ic_anc_sel),
+                    NoiseMode.TRANSPARENCY to intArrayOf(R.id.pv_btn_tr, R.id.pv_sel_tr, R.id.pv_ic_tr_idle, R.id.pv_ic_tr_sel),
+                    NoiseMode.OFF to intArrayOf(R.id.pv_btn_off, R.id.pv_sel_off, R.id.pv_ic_off_idle, R.id.pv_ic_off_sel),
+                )
+            } else {
+                mapOf(
+                    NoiseMode.ANC to intArrayOf(R.id.ph_btn_anc, R.id.ph_sel_anc, R.id.ph_ic_anc_idle, R.id.ph_ic_anc_sel),
+                    NoiseMode.TRANSPARENCY to intArrayOf(R.id.ph_btn_tr, R.id.ph_sel_tr, R.id.ph_ic_tr_idle, R.id.ph_ic_tr_sel),
+                    NoiseMode.OFF to intArrayOf(R.id.ph_btn_off, R.id.ph_sel_off, R.id.ph_ic_off_idle, R.id.ph_ic_off_sel),
+                )
+            }
+            val shown = s.shownMode
+            for ((mode, id) in ids) {
+                val (button, sel, iconIdle, iconSel) = id.toList()
+                val on = mode == shown
+                v.setViewVisibility(sel, if (on) View.VISIBLE else View.GONE)
+                v.setViewVisibility(iconSel, if (on) View.VISIBLE else View.GONE)
+                v.setViewVisibility(iconIdle, if (on) View.GONE else View.VISIBLE)
+                v.setContentDescription(button, label(ctx, mode))
+                v.setOnClickPendingIntent(button, pending(ctx, ACTION_SET, mode))
+            }
+            return v
+        }
+
         // ───────────── 2×2: el modo actual; tocar para alternar ─────────────
 
         private fun small(ctx: Context, s: BudsState): RemoteViews {
@@ -200,3 +268,10 @@ class BudsWidgetProvider : AppWidgetProvider() {
         work { finish() }
     }
 }
+
+/** Entradas extra en el selector de widgets; mismo comportamiento, otro tamaño inicial. */
+class BudsWidget1x1 : BudsWidgetProvider()
+
+class BudsWidget2x1 : BudsWidgetProvider()
+
+class BudsWidget1x2 : BudsWidgetProvider()

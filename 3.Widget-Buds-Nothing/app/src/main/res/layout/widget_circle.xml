@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget 1x1: un círculo como los íconos de apps. Muestra el modo actual; tocar alterna.
+     Punto rojo = cancelación de ruido activa. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/c_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="centerInside"
+        android:src="@drawable/circle_bg" />
+
+    <ImageView
+        android:id="@+id/c_ic_anc"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_mode_anc"
+        android:tint="@color/fg"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/c_ic_tr"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_mode_transparency"
+        android:tint="@color/fg"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/c_ic_off"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="center"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_mode_off"
+        android:tint="@color/fg"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/c_dot"
+        android:layout_width="6dp"
+        android:layout_height="6dp"
+        android:layout_gravity="center"
+        android:importantForAccessibility="no"
+        android:src="@drawable/dot_red"
+        android:translationX="15dp"
+        android:translationY="-15dp"
+        android:visibility="gone" />
+</FrameLayout>
