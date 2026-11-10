@@ -26,19 +26,37 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # Misma clave de firma en cada compilación (queda en la caché privada de Actions,
-      # no en el repo), para que cada APK nuevo se instale encima del anterior.
-      # Si la caché expira (7 días sin compilar), se genera otra y hay que reinstalar.
+      # Misma clave de firma en cada compilación, para que cada APK nuevo se instale
+      # encima del anterior. La clave se crea aquí la primera vez y vive solo en la caché
+      # privada de Actions (nunca en el repo). Si la caché expira (7 días sin compilar),
+      # se genera otra y hay que reinstalar una vez.
       - uses: actions/cache@v4
         with:
-          path: ~/.android/debug.keystore
-          key: buds-debug-keystore-v1
+          path: ~/buds-signing
+          key: buds-signing-v1
+
+      - name: Clave de firma
+        run: |
+          mkdir -p ~/buds-signing
+          if [ ! -f ~/buds-signing/buds.keystore ]; then
+            keytool -genkeypair -keystore ~/buds-signing/buds.keystore -alias buds \
+              -storepass "$BUDS_KEYSTORE_PASS" -keypass "$BUDS_KEYSTORE_PASS" \
+              -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Buds Widget"
+            echo "Clave nueva generada"
+          else
+            echo "Usando la clave guardada en caché"
+          fi
+          echo "BUDS_KEYSTORE=$HOME/buds-signing/buds.keystore" >> "$GITHUB_ENV"
+        env:
+          BUDS_KEYSTORE_PASS: buds-widget
 
       - name: Tests del protocolo
         run: ./gradlew --no-daemon testDebugUnitTest
 
       - name: Compilar APK
         run: ./gradlew --no-daemon assembleRelease
+        env:
+          BUDS_KEYSTORE_PASS: buds-widget
 
       - uses: actions/upload-artifact@v4
         with:

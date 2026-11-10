@@ -17,12 +17,25 @@ android {
         versionName = "1.0"
     }
 
+    // En GitHub Actions se firma con una clave estable (ver el workflow) para que las
+    // actualizaciones se instalen encima. En una compilación local se usa la clave debug.
+    val budsKeystore = System.getenv("BUDS_KEYSTORE")
+    signingConfigs {
+        if (budsKeystore != null) {
+            create("buds") {
+                storeFile = file(budsKeystore)
+                storePassword = System.getenv("BUDS_KEYSTORE_PASS")
+                keyAlias = "buds"
+                keyPassword = System.getenv("BUDS_KEYSTORE_PASS")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // Firmado con la clave debug para que el APK de release se pueda instalar directo.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(if (budsKeystore != null) "buds" else "debug")
         }
     }
 
