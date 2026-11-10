@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Paleta Nothing OS: monocromo + un único acento rojo. Modo claro. -->
+<resources>
+    <color name="nt_red">#FFD71921</color>
+    <color name="widget_bg">#FFFFFFFF</color>
+    <color name="fg">#FF000000</color>
+    <color name="fg_secondary">#FF8A8A8A</color>
+    <color name="pill_idle">#FFEFEFEF</color>
+    <color name="pill_sel">#FF000000</color>
+    <color name="on_sel">#FFFFFFFF</color>
+    <color name="dot_off">#FFC8C8C8</color>
+    <color name="app_bg">#FFF4F4F4</color>
+    <color name="card">#FFFFFFFF</color>
+</resources>
