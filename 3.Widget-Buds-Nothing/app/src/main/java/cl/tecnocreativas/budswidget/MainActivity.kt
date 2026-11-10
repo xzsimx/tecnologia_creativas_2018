@@ -200,7 +200,7 @@ class MainActivity : Activity() {
             R.id.bat_r to state.batteryRight,
             R.id.bat_c to state.batteryCase,
         ).forEach { (id, v) ->
-            findViewById<ImageView>(id).setImageBitmap(DotMatrix.text(if (v >= 0) "$v" else "--", pitch))
+            findViewById<ImageView>(id).setImageBitmap(DotMatrix.text(if (v >= 0) "$v" else "-", pitch))
         }
         renderModes()
     }

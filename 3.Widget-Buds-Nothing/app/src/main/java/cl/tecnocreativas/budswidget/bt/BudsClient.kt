@@ -1,11 +1,13 @@
 package cl.tecnocreativas.budswidget.bt
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothSocket
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import cl.tecnocreativas.budswidget.protocol.Cmd
 import cl.tecnocreativas.budswidget.protocol.Frame
@@ -65,7 +67,11 @@ class BudsClient(private val context: Context) {
     }
 
     fun open(device: BluetoothDevice): Session {
-        adapter(context)?.cancelDiscovery()
+        // Una búsqueda activa vuelve lenta la conexión, pero detenerla exige BLUETOOTH_SCAN
+        // (Android 12+). La app no escanea, así que solo lo hacemos si ese permiso existe.
+        if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED) {
+            runCatching { adapter(context)?.cancelDiscovery() }
+        }
         val advertised = device.uuids?.map { it.uuid }.orEmpty()
         // primero lo que el dispositivo anuncia, luego el resto como respaldo
         val order = mutableListOf<UUID>()

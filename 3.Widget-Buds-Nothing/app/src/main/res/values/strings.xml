@@ -29,6 +29,7 @@
     <string name="err_bt_off">Bluetooth apagado</string>
     <string name="err_no_device">Sin audífonos</string>
     <string name="err_not_connected">Sin conexión</string>
+    <string name="err_unexpected">Error inesperado: mira Avanzado</string>
 
     <string name="grant">Conceder permiso de dispositivos cercanos</string>
     <string name="section_device">AUDÍFONOS</string>

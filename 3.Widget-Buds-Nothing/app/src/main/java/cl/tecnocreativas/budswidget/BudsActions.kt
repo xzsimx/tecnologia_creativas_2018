@@ -128,7 +128,12 @@ object BudsActions {
             } catch (e: Exception) {
                 Log.w(TAG, "fallo", e)
                 log("✕ ${e.message}")
-                state.error = e.message ?: e.javaClass.simpleName
+                // En pantalla solo un mensaje corto; el detalle técnico queda en la consola.
+                state.error = when (e) {
+                    is SecurityException -> app.getString(R.string.err_permission)
+                    is IOException -> e.message ?: app.getString(R.string.err_not_connected)
+                    else -> app.getString(R.string.err_unexpected)
+                }
                 if (e.message == app.getString(R.string.err_not_connected)) state.linkUp = false
             } finally {
                 state.pending = null
