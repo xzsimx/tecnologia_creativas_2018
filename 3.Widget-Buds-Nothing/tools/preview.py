@@ -326,9 +326,9 @@ def app(theme="dark", s=3):
 
 
 # ───────────── formatos compactos (1x1, 2x1, 1x2) para launchers de íconos redondos ─────────────
-# Medidas tomadas de la pantalla de inicio de Nothing OS (4 columnas): celda 82×98 dp,
-# íconos de 63 dp. Los widgets compactos usan esas mismas proporciones.
-CELL_W, CELL_H, ICON = 82, 98, 63
+# Medidas de la pantalla de inicio del Nothing Phone (2a) (411 dp de ancho, 4 columnas):
+# celda ≈ 103×94 dp, íconos de 72 dp. Los widgets compactos usan esas mismas proporciones.
+CELL_W, CELL_H, ICON = 103, 94, 72
 
 
 def circle_1x1(theme, active, s):
@@ -338,11 +338,11 @@ def circle_1x1(theme, active, s):
     img = Image.new("RGBA", (int(D), int(D)), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     d.ellipse([0, 0, D - 1, D - 1], fill=t["bg"])
-    ic = 28 * s
+    ic = 30 * s
     draw_icon(d, active, (D - ic) / 2, (D - ic) / 2, ic, t["fg"])
     if active == "anc":  # único acento: punto rojo cuando la cancelación está activa
         r = 3 * s
-        d.ellipse([D * 0.74 - r, D * 0.26 - r, D * 0.74 + r, D * 0.26 + r], fill=RED)
+        d.ellipse([D / 2 + 17 * s - r, D / 2 - 17 * s - r, D / 2 + 17 * s + r, D / 2 - 17 * s + r], fill=RED)
     return img
 
 
@@ -354,7 +354,7 @@ def pill(theme, active, s, vertical=False):
     img = Image.new("RGBA", (int(W), int(H)), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     d.rounded_rectangle([0, 0, W - 1, H - 1], radius=min(W, H) / 2, fill=t["bg"])
-    btn = 47 * s
+    btn = 56 * s
     pad = (ICON * s - btn) / 2
     span = (W if not vertical else H) - 2 * pad
     for i, (name, _) in enumerate(MODES):
@@ -363,7 +363,7 @@ def pill(theme, active, s, vertical=False):
         sel = name == active
         if sel:
             d.ellipse([cx - btn / 2, cy - btn / 2, cx + btn / 2, cy + btn / 2], fill=t["sel"])
-        ic = 22 * s
+        ic = 24 * s
         draw_icon(d, name, cx - ic / 2, cy - ic / 2, ic, t["on_sel"] if sel else t["fg"])
     return img
 
@@ -372,10 +372,10 @@ def home(theme="dark", s=3):
     """Pantalla de inicio de ejemplo (4 columnas) con los formatos nuevos junto a íconos."""
     t = THEMES[theme]
     S = s * SS
-    W, H = 360 * S, 470 * S
+    W, H = 411 * S, 420 * S
     img = Image.new("RGBA", (int(W), int(H)), t["wall"])
     d = ImageDraw.Draw(img)
-    x0 = (360 - 4 * CELL_W) / 2 * S
+    x0 = (411 - 4 * CELL_W) / 2 * S
     y0 = 20 * S
 
     def cell(c, r):

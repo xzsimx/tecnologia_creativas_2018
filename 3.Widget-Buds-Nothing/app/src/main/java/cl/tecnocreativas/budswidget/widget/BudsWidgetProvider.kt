@@ -54,17 +54,17 @@ open class BudsWidgetProvider : AppWidgetProvider() {
 
         /**
          * Vistas adaptables. El launcher usa la más grande que quepa en el tamaño real del
-         * widget (en dp). En un Nothing de 4 columnas la celda mide ≈ 82×98 dp.
+         * widget (en dp). En el Nothing Phone (2a) con 4 columnas una celda mide ≈ 103×94 dp.
          */
         fun build(ctx: Context): RemoteViews {
             val s = BudsState(ctx)
             return RemoteViews(
                 mapOf(
                     SizeF(40f, 40f) to circle(ctx, s),
-                    SizeF(110f, 40f) to capsule(ctx, s, vertical = false),
-                    SizeF(40f, 110f) to capsule(ctx, s, vertical = true),
-                    SizeF(100f, 100f) to small(ctx, s),
-                    SizeF(220f, 100f) to wide(ctx, s),
+                    SizeF(150f, 40f) to capsule(ctx, s, vertical = false),
+                    SizeF(40f, 150f) to capsule(ctx, s, vertical = true),
+                    SizeF(130f, 130f) to small(ctx, s),
+                    SizeF(280f, 130f) to wide(ctx, s),
                 )
             )
         }

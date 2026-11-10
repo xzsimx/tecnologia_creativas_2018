@@ -15,8 +15,8 @@
 
     <ImageView
         android:id="@+id/c_ic_anc"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:layout_gravity="center"
         android:importantForAccessibility="no"
         android:src="@drawable/ic_mode_anc"
@@ -25,8 +25,8 @@
 
     <ImageView
         android:id="@+id/c_ic_tr"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:layout_gravity="center"
         android:importantForAccessibility="no"
         android:src="@drawable/ic_mode_transparency"
@@ -35,8 +35,8 @@
 
     <ImageView
         android:id="@+id/c_ic_off"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:layout_gravity="center"
         android:importantForAccessibility="no"
         android:src="@drawable/ic_mode_off"
@@ -50,7 +50,7 @@
         android:layout_gravity="center"
         android:importantForAccessibility="no"
         android:src="@drawable/dot_red"
-        android:translationX="15dp"
-        android:translationY="-15dp"
+        android:translationX="17dp"
+        android:translationY="-17dp"
         android:visibility="gone" />
 </FrameLayout>
