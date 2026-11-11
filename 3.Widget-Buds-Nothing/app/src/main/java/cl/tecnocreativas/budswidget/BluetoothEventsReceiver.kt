@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import cl.tecnocreativas.budswidget.bt.BudsClient
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Escucha cuando los audífonos se conectan/desconectan (ACL) para mantener el widget al día.
@@ -36,9 +37,11 @@ class BluetoothEventsReceiver : BroadcastReceiver() {
                 BudsActions.notifyUi(ctx)
                 // Los audífonos tardan un poco en levantar sus servicios tras conectar.
                 val result = goAsync()
-                Handler(Looper.getMainLooper()).postDelayed({
-                    BudsActions.refresh(ctx) { result.finish() }
-                }, 3000)
+                val finished = AtomicBoolean(false)
+                val finish = { if (finished.compareAndSet(false, true)) result.finish() }
+                val main = Handler(Looper.getMainLooper())
+                main.postDelayed({ BudsActions.refresh(ctx) { finish() } }, 3000)
+                main.postDelayed({ finish() }, 9000) // nunca pasar el límite del sistema
             }
             BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
                 state.linkUp = false

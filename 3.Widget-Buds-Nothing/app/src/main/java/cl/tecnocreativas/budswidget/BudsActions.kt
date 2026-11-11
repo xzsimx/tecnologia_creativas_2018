@@ -19,6 +19,7 @@ import cl.tecnocreativas.budswidget.protocol.toHex
 import cl.tecnocreativas.budswidget.widget.BudsWidgetProvider
 import java.io.IOException
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Operaciones de alto nivel. Se ejecutan en un único hilo para que dos toques seguidos
@@ -31,7 +32,7 @@ object BudsActions {
 
     /** Bitácora de tramas para la consola de la app (ingeniería inversa en vivo). */
     val log = ArrayDeque<String>()
-    var onLog: (() -> Unit)? = null
+    @Volatile var onLog: (() -> Unit)? = null
 
     private fun log(line: String) {
         Log.d(TAG, line)
@@ -74,10 +75,28 @@ object BudsActions {
         setMode(ctx, CYCLE[(CYCLE.indexOf(current) + 1) % CYCLE.size], done)
     }
 
+    private val refreshing = AtomicBoolean(false)
+
+    /**
+     * Lee modo y batería. Si ya hay una lectura en curso no abre otra conexión (varios
+     * widgets, el tile y la app pueden pedirla a la vez).
+     */
     fun refresh(ctx: Context, done: () -> Unit = {}) {
+        if (!refreshing.compareAndSet(false, true)) { main.post(done); return }
         val app = ctx.applicationContext
         BudsState(app).error = null
-        run(app, done) { }
+        run(app, { refreshing.set(false); done() }) { }
+    }
+
+    /**
+     * Refresca solo si el último dato tiene más de [maxAgeMs] y los audífonos no están
+     * desconectados. Así abrir el panel o la app no despierta la radio a cada rato.
+     */
+    fun refreshIfStale(ctx: Context, maxAgeMs: Long, done: () -> Unit = {}) {
+        val s = BudsState(ctx)
+        val stale = System.currentTimeMillis() - s.updatedAt > maxAgeMs
+        if (stale && s.linkUp != false && s.pending == null && hasPermission(ctx)) refresh(ctx, done)
+        else main.post(done)
     }
 
     /** Envía una trama arbitraria escrita en la consola: "CMD PAYLOAD", p. ej. "0404 01 01 04". */

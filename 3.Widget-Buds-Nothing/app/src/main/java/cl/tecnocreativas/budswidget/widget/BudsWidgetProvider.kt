@@ -236,11 +236,7 @@ open class BudsWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(ctx: Context, mgr: AppWidgetManager, ids: IntArray) {
         mgr.updateAppWidget(ids, build(ctx))
-        val s = BudsState(ctx)
-        val stale = System.currentTimeMillis() - s.updatedAt > STALE_MS
-        if (stale && s.linkUp != false && BudsActions.hasPermission(ctx)) {
-            async { BudsActions.refresh(ctx, it) }
-        }
+        async { BudsActions.refreshIfStale(ctx, STALE_MS, it) }
     }
 
     override fun onAppWidgetOptionsChanged(ctx: Context, mgr: AppWidgetManager, id: Int, options: Bundle) {

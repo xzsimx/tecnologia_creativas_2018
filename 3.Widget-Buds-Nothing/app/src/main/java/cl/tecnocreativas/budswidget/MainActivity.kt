@@ -68,6 +68,7 @@ class MainActivity : Activity() {
         render()
         renderConsole()
         if (BudsActions.hasPermission(this)) fillDevices()
+        BudsActions.refreshIfStale(this, 60 * 1000L, ::render)
     }
 
     override fun onPause() {

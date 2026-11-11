@@ -18,7 +18,10 @@ class NoiseTileService : TileService() {
         }
     }
 
-    override fun onStartListening() = render()
+    override fun onStartListening() {
+        render()
+        BudsActions.refreshIfStale(this, 5 * 60 * 1000L) { render() }
+    }
 
     override fun onClick() {
         BudsActions.cycle(this) { render() }
