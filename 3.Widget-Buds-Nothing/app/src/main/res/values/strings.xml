@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Buds</string>
-    <string name="widget_description">Cambia entre cancelación de ruido, transparencia y normal en tus OnePlus Buds 4</string>
+    <string name="widget_description">Cambia entre cancelación de ruido, transparencia y normal en tus OnePlus Buds 4 o Nothing Headphone (1)</string>
     <string name="tile_label">Buds</string>
     <string name="widget_name_1x1">Buds · círculo</string>
     <string name="widget_name_2x1">Buds · cápsula</string>
@@ -22,6 +22,8 @@
     <string name="cap_left">IZQ</string>
     <string name="cap_right">DER</string>
     <string name="cap_case">ESTUCHE</string>
+    <string name="cap_battery">BATERÍA</string>
+    <string name="device_auto">Automático (los que estén conectados)</string>
     <string name="label_anc">ANC</string>
     <string name="label_transparency">Transparencia</string>
     <string name="label_off">Normal</string>
@@ -40,8 +42,8 @@
     <string name="grant">Conceder permiso de dispositivos cercanos</string>
     <string name="section_device">AUDÍFONOS</string>
     <string name="section_console">CONSOLA DE PROTOCOLO</string>
-    <string name="console_hint">CMD + payload en hex, ej. 010C 0101 (consultar modo) o 0404 010104 (transparencia en Buds 4)</string>
+    <string name="console_hint">CMD + payload en hex, ej. 010C 0101 (modo en Buds 4) o C01E 03 (modo en Headphone (1))</string>
     <string name="refresh">Actualizar</string>
     <string name="send">Enviar</string>
-    <string name="no_bonded">Empareja primero tus OnePlus Buds 4 en Ajustes → Bluetooth.</string>
+    <string name="no_bonded">Empareja primero tus audífonos (OnePlus Buds 4 o Nothing Headphone (1)) en Ajustes → Bluetooth.</string>
 </resources>

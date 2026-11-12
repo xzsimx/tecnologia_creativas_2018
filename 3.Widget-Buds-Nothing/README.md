@@ -1,6 +1,6 @@
-# Buds: widget Nothing OS para OnePlus Buds 4
+# Buds: widget Nothing OS para OnePlus Buds 4 y Nothing Headphone (1)
 
-Widget para el **Nothing Phone (2a)** con Nothing OS 4. Cambia los **OnePlus Buds 4** entre
+Widget para el **Nothing Phone (2a)** con Nothing OS 4. Cambia los **OnePlus Buds 4** o los **Nothing Headphone (1)** entre
 **cancelación de ruido**, **transparencia** y **normal** (ANC apagado) desde la pantalla de
 inicio, sin abrir la app de OnePlus.
 
@@ -37,6 +37,21 @@ inicio, sin abrir la app de OnePlus.
 
 `tools/preview.py` es la fuente única del diseño. Define la geometría de los íconos y genera
 los vectores Android y los mockups de `docs/`.
+
+## Audífonos compatibles
+
+| Audífonos | Protocolo | Estado |
+|---|---|---|
+| **OnePlus Buds 4** | HeyMelody (OPPO/OnePlus) | probado en el teléfono |
+| **Nothing Headphone (1)** | Nothing X | protocolo verificado por terceros; sin probar aún con esta app |
+| Otros OnePlus (Buds 3, Pro 2/3, Nord Buds…) | HeyMelody | según el catálogo, sin probar |
+| Otros Nothing / CMF | Nothing X | puede funcionar, sin probar |
+
+Si tienes más de unos audífonos emparejados, la app controla automáticamente **los que estén
+conectados**. En *Avanzado* puedes fijar unos a mano.
+
+Con el Headphone (1), la app muestra una sola batería y los niveles de ANC de Nothing:
+alto, medio, bajo y adaptativo.
 
 ## Cómo funciona (ingeniería inversa)
 

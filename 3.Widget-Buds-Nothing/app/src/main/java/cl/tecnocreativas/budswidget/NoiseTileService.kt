@@ -42,7 +42,7 @@ class NoiseTileService : TileService() {
             s.pending != null -> getString(R.string.status_applying)
             s.error != null -> s.error
             mode == NoiseMode.ANC -> (s.reportedLevel ?: s.ancLevel).label
-            else -> s.model.name.removePrefix("OnePlus ")
+            else -> s.displayName.removePrefix("OnePlus ").removePrefix("Nothing ")
         }
         tile.icon = Icon.createWithResource(
             this,

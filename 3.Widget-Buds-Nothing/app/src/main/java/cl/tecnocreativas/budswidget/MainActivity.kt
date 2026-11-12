@@ -146,7 +146,7 @@ class MainActivity : Activity() {
     /** Selector segmentado del nivel de ANC; solo aparece con ANC activo. */
     private fun renderLevels(shown: NoiseMode?) {
         val group = findViewById<LinearLayout>(R.id.levels)
-        val levels = AncLevel.entries.filter { it in state.model.ancLevels }
+        val levels = AncLevel.entries.filter { it in state.ancLevels }
         if (shown != NoiseMode.ANC || levels.size < 2) {
             group.visibility = View.GONE
             return
@@ -181,8 +181,7 @@ class MainActivity : Activity() {
         val granted = BudsActions.hasPermission(this)
         findViewById<View>(R.id.grant).visibility = if (granted) View.GONE else View.VISIBLE
 
-        findViewById<TextView>(R.id.name).text =
-            state.model.name.ifEmpty { state.deviceName ?: "OnePlus Buds 4" }
+        findViewById<TextView>(R.id.name).text = state.displayName
 
         val ok = state.error == null && state.linkUp != false && state.mode != null
         findViewById<ImageView>(R.id.link_dot)
@@ -195,6 +194,12 @@ class MainActivity : Activity() {
             else -> getString(R.string.status_connected)
         }
 
+        // Audífonos de diadema: una sola batería.
+        val single = state.singleBattery
+        findViewById<TextView>(R.id.cap_left).setText(if (single) R.string.cap_battery else R.string.cap_left)
+        for (id in listOf(R.id.bat_r, R.id.bat_c)) {
+            (findViewById<View>(id).parent as View).visibility = if (single) View.INVISIBLE else View.VISIBLE
+        }
         val pitch = 4.2f * dp
         listOf(
             R.id.bat_l to state.batteryLeft,
@@ -216,29 +221,28 @@ class MainActivity : Activity() {
         val group = findViewById<RadioGroup>(R.id.devices)
         group.setOnCheckedChangeListener(null)
         group.removeAllViews()
-        val devices = BudsClient.bondedCandidates(this)
+        val devices = BudsClient.candidates(this)
         if (devices.isEmpty()) {
             group.addView(TextView(this).apply { setText(R.string.no_bonded); setTextAppearance(R.style.Caption) })
             return
         }
-        val selected = state.address ?: devices.firstOrNull { BudsClient.score(it) > 0 }?.address
-        devices.forEach { d ->
+        // "Automático" controla los audífonos que estén conectados; o se fija uno a mano.
+        val options = listOf<Pair<String?, String>>(null to getString(R.string.device_auto)) +
+            devices.map { it.device.address to "${it.device.name ?: it.device.address}  ·  ${it.family.label}" }
+        val pinned = state.pinned?.takeIf { p -> devices.any { it.device.address == p } }
+        for ((addr, label) in options) {
             group.addView(RadioButton(this).apply {
                 id = View.generateViewId()
-                text = d.name ?: d.address
-                tag = d.address
-                isChecked = d.address == selected
+                text = label
+                tag = addr ?: AUTO
+                isChecked = addr == pinned
                 setTextAppearance(R.style.Body)
             })
         }
         group.setOnCheckedChangeListener { g, id ->
-            val addr = g.findViewById<View>(id)?.tag as? String ?: return@setOnCheckedChangeListener
-            if (addr != state.address) {
-                state.address = addr
-                state.productId = null // otro dispositivo: volver a identificarlo
-                state.mode = null
-                BudsActions.refresh(this, ::render)
-            }
+            val tag = g.findViewById<View>(id)?.tag as? String ?: return@setOnCheckedChangeListener
+            state.pinned = tag.takeIf { it != AUTO }
+            BudsActions.refresh(this, ::render)
         }
     }
 
@@ -250,6 +254,7 @@ class MainActivity : Activity() {
     }
 
     companion object {
+        private const val AUTO = "auto"
         private val SHORT_LEVEL = mapOf(
             AncLevel.MAX to "Máx",
             AncLevel.MODERATE to "Media",

@@ -76,4 +76,51 @@ class HeyMelodyTest {
         assertEquals(setOf(2), b.charging)
         assertNull(b.case)
     }
+
+    /** Simula unos Buds 4 para probar el driver completo (lo que usa la app). */
+    private class FakeBuds4 : Transport {
+        val sent = mutableListOf<Frame>()
+        private val parser = FrameParser()
+        private var out = ByteArray(0)
+        var bit = 8 // transparencia, como la informan los Buds 4
+
+        override fun write(bytes: ByteArray) {
+            for (f in parser.feed(bytes)) {
+                sent += f
+                val reply = when (f.command) {
+                    Cmd.PRODUCT_ID -> byteArrayOf(0, 0x14, 0x54, 0x06)
+                    Cmd.NOISE_QUERY -> byteArrayOf(0, 1, 1, (if (bit < 8) 1 shl bit else 0).toByte(), (if (bit >= 8) 1 shl (bit - 8) else 0).toByte())
+                    Cmd.SET_NOISE -> { bit = Integer.numberOfTrailingZeros(f.payload[2].toInt() and 0xFF); byteArrayOf(0) }
+                    Cmd.BATTERY -> byteArrayOf(0, 2, 1, 80, 2, 78)
+                    else -> null
+                } ?: continue
+                out += Frame(f.command or Cmd.REPLY, f.seq, reply).encode()
+            }
+        }
+
+        override fun read(buf: ByteArray, timeoutMs: Long): Int {
+            if (out.isEmpty()) { Thread.sleep(minOf(timeoutMs, 5)); return 0 }
+            val n = minOf(out.size, buf.size)
+            out.copyInto(buf, 0, 0, n)
+            out = ByteArray(0)
+            return n
+        }
+    }
+
+    @Test fun headsetDriverRoundTrip() {
+        val fake = FakeBuds4()
+        val hs = Family.HEYMELODY.create(fake) {}
+        val id = hs.identify(null)
+        assertEquals("065414", id.id)
+        assertEquals("OnePlus Buds 4", id.name)
+        assertEquals(Reading(NoiseMode.TRANSPARENCY, null), hs.readMode())
+        hs.setMode(NoiseMode.ANC, AncLevel.MAX)
+        assertArrayEquals(hex("01 01 10"), fake.sent.last().payload)
+        assertEquals(Reading(NoiseMode.ANC, AncLevel.MAX), hs.readMode())
+        assertEquals(80, hs.readBattery()!!.left)
+        // con el id ya guardado no vuelve a preguntarlo
+        val again = FakeBuds4()
+        Family.HEYMELODY.create(again) {}.identify("065414")
+        assertEquals(0, again.sent.size)
+    }
 }

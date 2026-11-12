@@ -233,7 +233,14 @@ object Payloads {
     val NOISE_QUERY = byteArrayOf(0x01, 0x01)
 }
 
-data class Battery(val left: Int?, val right: Int?, val case: Int?, val charging: Set<Int> = emptySet())
+/** Niveles en %. [single] es para audífonos de diadema, que informan una sola batería. */
+data class Battery(
+    val left: Int?,
+    val right: Int?,
+    val case: Int?,
+    val charging: Set<Int> = emptySet(),
+    val single: Int? = null,
+)
 
 object Parse {
     /** Respuesta 0x8103: 00 b1 b2 b3 → "b3b2b1" */

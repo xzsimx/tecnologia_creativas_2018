@@ -5,154 +5,173 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.util.Log
-import cl.tecnocreativas.budswidget.protocol.Cmd
-import cl.tecnocreativas.budswidget.protocol.Frame
-import cl.tecnocreativas.budswidget.protocol.FrameParser
+import cl.tecnocreativas.budswidget.protocol.Family
+import cl.tecnocreativas.budswidget.protocol.Transport
 import cl.tecnocreativas.budswidget.protocol.toHex
 import java.io.IOException
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
- * Conexión RFCOMM corta con los audífonos: abrir, intercambiar unas tramas y cerrar.
- * El audio (A2DP/LE Audio) no se ve afectado: RFCOMM es un canal de control aparte.
+ * Encuentra los audífonos y abre una conexión RFCOMM corta con ellos. El audio
+ * (A2DP / LE Audio) no se ve afectado: RFCOMM es un canal de control aparte.
  *
  * Todo es bloqueante: llamar siempre desde un hilo de fondo.
  */
 @SuppressLint("MissingPermission") // los llamadores verifican BLUETOOTH_CONNECT
 class BudsClient(private val context: Context) {
 
+    data class Target(val device: BluetoothDevice, val family: Family, val score: Int)
+
     companion object {
         private const val TAG = "BudsClient"
-
-        /** Servicio SDP "HeyMelody" que anuncian los Buds 4 (canal RFCOMM 15). */
-        val UUID_HEYMELODY: UUID = UUID.fromString("0000079a-d102-11e1-9b23-00025b00a5a5")
-        /** Variante que anuncian otras generaciones. */
-        val UUID_HEYMELODY_ALT: UUID = UUID.fromString("00001107-d102-11e1-9b23-00025b00a5a5")
-        /** Puerto serie estándar (algunos realme). */
-        val UUID_SPP: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
-
-        private val NAME_HINTS = listOf("oneplus buds", "oneplus nord buds", "buds 4", "enco", "realme buds")
+        private val UUID_SPP: UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb")
 
         fun adapter(context: Context): BluetoothAdapter? =
             context.getSystemService(BluetoothManager::class.java)?.adapter
 
-        fun bondedCandidates(context: Context): List<BluetoothDevice> {
-            val bonded = adapter(context)?.bondedDevices.orEmpty()
-            return bonded.sortedByDescending { score(it) }
+        fun target(d: BluetoothDevice): Target? {
+            val name = runCatching { d.name }.getOrNull()
+            val uuids = runCatching { d.uuids?.map { it.uuid } }.getOrNull().orEmpty()
+            val (family, score) = Family.detect(name, uuids) ?: return null
+            return Target(d, family, score)
         }
 
-        fun score(d: BluetoothDevice): Int {
-            val name = d.name?.lowercase().orEmpty()
-            var s = 0
-            if (NAME_HINTS.any { name.contains(it) }) s += 2
-            if (name.contains("buds 4")) s += 1
-            val uuids = d.uuids?.map { it.uuid }.orEmpty()
-            if (UUID_HEYMELODY in uuids || UUID_HEYMELODY_ALT in uuids) s += 3
-            return s
-        }
+        /** Audífonos emparejados que la app sabe controlar, los más seguros primero. */
+        fun candidates(context: Context): List<Target> =
+            adapter(context)?.bondedDevices.orEmpty().mapNotNull(::target).sortedByDescending { it.score }
     }
 
-    /** Busca los audífonos: el elegido en ajustes, o el mejor candidato emparejado. */
-    fun findDevice(savedAddress: String?): BluetoothDevice? {
+    /**
+     * Elige con qué audífonos hablar: el fijado por el usuario; si no, los que estén
+     * conectados como audio ahora (prefiriendo los últimos usados); si no, los últimos usados.
+     */
+    fun findTarget(pinned: String?, last: String?): Target? {
         val adapter = adapter(context) ?: return null
         if (!adapter.isEnabled) return null
-        if (savedAddress != null) {
-            adapter.bondedDevices.firstOrNull { it.address == savedAddress }?.let { return it }
+        val all = candidates(context)
+        if (pinned != null) all.firstOrNull { it.device.address == pinned }?.let { return it }
+        if (all.size > 1) {
+            // Solo vale la pena preguntar qué está conectado si hay más de un candidato.
+            val connected = connectedAddresses()
+            val live = all.filter { it.device.address in connected }
+            if (live.isNotEmpty()) return live.firstOrNull { it.device.address == last } ?: live.first()
         }
-        return bondedCandidates(context).firstOrNull { score(it) > 0 }
+        return all.firstOrNull { it.device.address == last } ?: all.firstOrNull()
     }
 
-    fun open(device: BluetoothDevice): Session {
+    /** Direcciones conectadas como audio (A2DP, manos libres o LE Audio). Máx. ~1,5 s. */
+    private fun connectedAddresses(): Set<String> {
+        val adapter = adapter(context) ?: return emptySet()
+        val profiles = buildList {
+            add(BluetoothProfile.A2DP)
+            add(BluetoothProfile.HEADSET)
+            if (Build.VERSION.SDK_INT >= 33) add(BluetoothProfile.LE_AUDIO)
+        }
+        val result = ConcurrentHashMap.newKeySet<String>()
+        val latch = CountDownLatch(profiles.size)
+        for (p in profiles) {
+            val requested = adapter.getProfileProxy(context, object : BluetoothProfile.ServiceListener {
+                override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
+                    runCatching { proxy.connectedDevices.forEach { result += it.address } }
+                    runCatching { adapter.closeProfileProxy(profile, proxy) }
+                    latch.countDown()
+                }
+
+                override fun onServiceDisconnected(profile: Int) = Unit
+            }, p)
+            if (!requested) latch.countDown()
+        }
+        latch.await(1500, TimeUnit.MILLISECONDS)
+        return result
+    }
+
+    fun open(t: Target): Link {
         // Una búsqueda activa vuelve lenta la conexión, pero detenerla exige BLUETOOTH_SCAN
         // (Android 12+). La app no escanea, así que solo lo hacemos si ese permiso existe.
         if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED) {
             runCatching { adapter(context)?.cancelDiscovery() }
         }
-        val advertised = device.uuids?.map { it.uuid }.orEmpty()
+        val device = t.device
+        val advertised = runCatching { device.uuids?.map { it.uuid } }.getOrNull().orEmpty()
         // primero lo que el dispositivo anuncia, luego el resto como respaldo
-        val order = mutableListOf<UUID>()
-        for (u in listOf(UUID_HEYMELODY, UUID_HEYMELODY_ALT, UUID_SPP)) if (u in advertised) order += u
-        for (u in listOf(UUID_HEYMELODY, UUID_HEYMELODY_ALT)) if (u !in order) order += u
+        val order = (t.family.uuids.filter { it in advertised } + t.family.uuids +
+            (if (t.family == Family.HEYMELODY && UUID_SPP in advertised) listOf(UUID_SPP) else emptyList())
+            ).distinct()
+
         var last: IOException? = null
-        for (uuid in order) {
-            val socket = try {
-                device.createRfcommSocketToServiceRecord(uuid)
-            } catch (e: IOException) { last = e; continue }
-            val t0 = System.currentTimeMillis()
-            try {
-                socket.connect()
-                Log.i(TAG, "RFCOMM conectado vía $uuid")
-                return Session(socket)
-            } catch (e: IOException) {
-                Log.w(TAG, "falló $uuid: ${e.message}")
-                last = e
-                runCatching { socket.close() }
-                // Un fallo lento = timeout de paginación: los audífonos no están al alcance
-                // (en el estuche, apagados). No tiene sentido probar otros UUID.
-                if (System.currentTimeMillis() - t0 > 3000) throw e
+        // Nothing acepta una sola conexión de control a la vez: si otra app la acaba de
+        // soltar, el primer intento puede fallar al instante. Se reintenta una vez.
+        repeat(2) { attempt ->
+            for (uuid in order) {
+                val socket = try {
+                    device.createRfcommSocketToServiceRecord(uuid)
+                } catch (e: IOException) { last = e; continue }
+                val t0 = System.currentTimeMillis()
+                try {
+                    socket.connect()
+                    Log.i(TAG, "RFCOMM conectado vía $uuid")
+                    return Link(socket)
+                } catch (e: IOException) {
+                    Log.w(TAG, "falló $uuid: ${e.message}")
+                    last = e
+                    runCatching { socket.close() }
+                    // Un fallo lento = timeout de paginación: los audífonos no están al alcance
+                    // (en el estuche, apagados). No tiene sentido seguir probando.
+                    if (System.currentTimeMillis() - t0 > 3000) throw e
+                }
             }
-        }
-        // Último recurso: canal 15 directo (API oculta, puede estar bloqueada).
-        try {
-            val m = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
-            val socket = m.invoke(device, 15) as BluetoothSocket
-            socket.connect()
-            Log.i(TAG, "RFCOMM conectado por canal 15")
-            return Session(socket)
-        } catch (e: Exception) {
-            Log.w(TAG, "canal 15 directo falló: ${e.message}")
+            // Último recurso: canal directo (API oculta, puede estar bloqueada).
+            try {
+                val m = device.javaClass.getMethod("createRfcommSocket", Int::class.javaPrimitiveType)
+                val socket = m.invoke(device, t.family.channel) as BluetoothSocket
+                try {
+                    socket.connect()
+                    Log.i(TAG, "RFCOMM conectado por canal ${t.family.channel}")
+                    return Link(socket)
+                } catch (e: IOException) {
+                    runCatching { socket.close() }
+                    throw e
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "canal ${t.family.channel} directo falló: ${e.message}")
+            }
+            if (attempt == 0) Thread.sleep(800)
         }
         throw last ?: IOException("No se pudo abrir RFCOMM")
     }
 
-    class Session(private val socket: BluetoothSocket) : AutoCloseable {
+    /** Socket RFCOMM abierto, visto como [Transport] por los protocolos. */
+    class Link(private val socket: BluetoothSocket) : Transport, AutoCloseable {
         private val input = socket.inputStream
         private val output = socket.outputStream
-        private val parser = FrameParser()
-        private val pending = ArrayDeque<Frame>()
-        private var seq = 0
 
-        /** Envía y devuelve el número de secuencia usado. */
-        fun send(command: Int, payload: ByteArray = ByteArray(0)): Int {
-            seq = (seq + 1) and 0xFF
-            val bytes = Frame(command, seq, payload).encode()
+        override fun write(bytes: ByteArray) {
             Log.d(TAG, "→ ${bytes.toHex()}")
             output.write(bytes)
             output.flush()
-            return seq
         }
 
-        /** Espera la respuesta a [command] (o cualquier trama que cumpla [match]). */
-        fun await(
-            timeoutMs: Long = 1500,
-            match: (Frame) -> Boolean,
-        ): Frame? {
-            pending.firstOrNull(match)?.let { pending.remove(it); return it }
+        override fun read(buf: ByteArray, timeoutMs: Long): Int {
             val deadline = System.currentTimeMillis() + timeoutMs
-            val buf = ByteArray(1024)
             while (System.currentTimeMillis() < deadline) {
-                if (input.available() <= 0) { Thread.sleep(15); continue }
-                val n = input.read(buf)
-                if (n < 0) throw IOException("socket cerrado")
-                for (f in parser.feed(buf, n)) {
-                    Log.d(TAG, "← $f")
-                    if (match(f)) return f else pending.addLast(f)
+                if (input.available() > 0) {
+                    val n = input.read(buf)
+                    if (n < 0) throw IOException("socket cerrado")
+                    return n
                 }
+                Thread.sleep(15)
             }
-            return null
+            return 0
         }
-
-        fun request(command: Int, payload: ByteArray = ByteArray(0), timeoutMs: Long = 1500): Frame? {
-            send(command, payload)
-            return await(timeoutMs) { it.command == (command or Cmd.REPLY) }
-        }
-
-        /** Tramas recibidas pero no consumidas (p. ej. pushes 0x0204). */
-        fun drain(): List<Frame> = pending.toList().also { pending.clear() }
 
         override fun close() {
             runCatching { input.close() }

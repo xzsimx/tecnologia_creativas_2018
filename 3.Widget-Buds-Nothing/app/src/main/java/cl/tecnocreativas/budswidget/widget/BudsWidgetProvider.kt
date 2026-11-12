@@ -103,8 +103,7 @@ open class BudsWidgetProvider : AppWidgetProvider() {
         }
 
         private fun title(s: BudsState): String {
-            val name = s.model.name.ifEmpty { s.deviceName ?: "Buds" }
-            return name.removePrefix("OnePlus ").uppercase()
+            return s.displayName.removePrefix("OnePlus ").removePrefix("Nothing ").uppercase()
         }
 
         /** Cabecera: nombre a la izquierda; batería en puntos (o un estado) a la derecha. */

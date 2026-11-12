@@ -27,12 +27,15 @@ class BluetoothEventsReceiver : BroadcastReceiver() {
         }) ?: return
 
         val state = BudsState(ctx)
-        val ours = if (state.address != null) device.address == state.address else BudsClient.score(device) > 0
+        val pinned = state.pinned
+        val ours = if (pinned != null) device.address == pinned else BudsClient.target(device) != null
         if (!ours) return
+        val current = device.address == state.address
 
         when (intent.action) {
             BluetoothDevice.ACTION_ACL_CONNECTED -> {
-                state.linkUp = true
+                // Si son otros audífonos compatibles, el refresco cambia a ellos solo.
+                if (current) state.linkUp = true
                 state.error = null
                 BudsActions.notifyUi(ctx)
                 // Los audífonos tardan un poco en levantar sus servicios tras conectar.
@@ -43,7 +46,7 @@ class BluetoothEventsReceiver : BroadcastReceiver() {
                 main.postDelayed({ BudsActions.refresh(ctx) { finish() } }, 3000)
                 main.postDelayed({ finish() }, 9000) // nunca pasar el límite del sistema
             }
-            BluetoothDevice.ACTION_ACL_DISCONNECTED -> {
+            BluetoothDevice.ACTION_ACL_DISCONNECTED -> if (current) {
                 state.linkUp = false
                 BudsActions.notifyUi(ctx)
             }
